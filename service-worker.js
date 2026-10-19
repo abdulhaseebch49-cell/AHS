@@ -21,7 +21,7 @@ self.addEventListener("fetch", event => {
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       const cached = await caches.match(request, { ignoreSearch: true });
-      const refresh = fetch(request).then(response => {
+      const refresh = fetch(request).then(async response => {
         if (response.ok) {
           const copy = response.clone();
           await caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
