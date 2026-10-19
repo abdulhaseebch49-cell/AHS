@@ -407,27 +407,28 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
   (function(){
     const installButton = document.getElementById("install-app");
     const installHint = document.getElementById("install-hint");
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     let installPrompt = null;
     const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-    if (!isInstalled && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
-      installButton.hidden = false;
-      installButton.addEventListener("click", () => {
-        installHint.textContent = "To install: tap Share, then Add to Home Screen.";
-        installHint.hidden = false;
-      });
-    }
+    installButton.hidden = isInstalled;
+    installButton.addEventListener("click", async () => {
+      if (installPrompt) {
+        installPrompt.prompt();
+        await installPrompt.userChoice;
+        installPrompt = null;
+        installButton.hidden = true;
+        return;
+      }
+      installHint.textContent = isIos
+        ? "To install: tap Share, then Add to Home Screen."
+        : "Open your browser menu and choose Install app or Add to Home Screen.";
+      installHint.hidden = false;
+    });
     window.addEventListener("beforeinstallprompt", event => {
       event.preventDefault();
       installPrompt = event;
       installButton.hidden = false;
       installHint.hidden = true;
-    });
-    installButton.addEventListener("click", async () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      await installPrompt.userChoice;
-      installPrompt = null;
-      installButton.hidden = true;
     });
     window.addEventListener("appinstalled", () => {
       installButton.hidden = true;
