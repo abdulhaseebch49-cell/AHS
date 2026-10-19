@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Abdul Haseeb Sajjad — Web Developer Portfolio. Modern responsive websites, projects, skills, education and certificates.">
 <meta name="theme-color" content="#030917">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AHS Portfolio">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.svg">
 <title>Abdul Haseeb Sajjad | Web Developer</title>
 <style>
 :root{
@@ -174,7 +179,9 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
 .ahs-chat-foot{padding:0 14px 11px;display:flex;justify-content:space-between;gap:8px;color:#7189a5;font-size:10px;background:rgba(3,12,29,.86)}.ahs-chat-foot a{color:#8edfff;font-weight:800}
 .contact-whatsapp{margin-top:8px!important;color:#b8c9dc;font-size:14px}.contact-whatsapp a{color:var(--green);font-weight:900}
 @media(max-width:480px){#ahs-chat-widget{right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom))}#ahs-chat-toggle{width:58px;height:58px}#ahs-chat-box{right:0;bottom:68px;width:calc(100vw - 24px);height:min(590px,calc(100dvh - 100px));min-height:300px;border-radius:19px}.ahs-chat-head{padding:13px}.ahs-quick-questions{gap:6px;padding-left:12px;padding-right:12px}}
+[hidden]{display:none!important}.app-install{font:inherit;cursor:pointer;gap:6px;min-width:145px}.install-hint{margin-top:10px;color:#a9bbd0;font-size:13px}
 @media(max-width:700px){.site-nav{background:rgba(2,8,23,.98)}.hero::after{filter:none;opacity:.7}.card:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -205,7 +212,9 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
     <div class="actions">
       <a class="btn" href="#projects">View Projects →</a>
       <a class="btn alt" href="#contact">Contact Me</a>
+      <button class="btn app-install" id="install-app" type="button" hidden>＋ Install App</button>
     </div>
+    <p class="install-hint" id="install-hint" role="status" hidden>Install this app from your browser menu.</p>
     <div class="hero-tech" aria-label="Technologies">
       <div class="tech-pill"><b>5</b> HTML5</div><div class="tech-pill"><b>#</b> CSS3</div><div class="tech-pill"><b>JS</b> JavaScript</div><div class="tech-pill"><b>⚡</b> Firebase</div>
     </div>
@@ -394,6 +403,41 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
       input.focus();
     }
   }
+
+  (function(){
+    const installButton = document.getElementById("install-app");
+    const installHint = document.getElementById("install-hint");
+    let installPrompt = null;
+    const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (!isInstalled && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      installButton.hidden = false;
+      installButton.addEventListener("click", () => {
+        installHint.textContent = "To install: tap Share, then Add to Home Screen.";
+        installHint.hidden = false;
+      });
+    }
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      installPrompt = event;
+      installButton.hidden = false;
+      installHint.hidden = true;
+    });
+    installButton.addEventListener("click", async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      installButton.hidden = true;
+    });
+    window.addEventListener("appinstalled", () => {
+      installButton.hidden = true;
+      installHint.hidden = true;
+      installPrompt = null;
+    });
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));
+    }
+  })();
 
   (function(){
     const links=[...document.querySelectorAll('.nav-links a[href^="#"]')].filter(a=>!a.classList.contains('nav-cta'));

@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "AHS Portfolio — Abdul Haseeb Sajjad",
+  "short_name": "AHS Portfolio",
+  "description": "Abdul Haseeb Sajjad — Web Developer Portfolio",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#020714",
+  "theme_color": "#030917",
+  "icons": [
+    {
+      "src": "./icons/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
