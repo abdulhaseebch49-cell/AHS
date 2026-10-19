@@ -179,7 +179,7 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
 .ahs-chat-foot{padding:0 14px 11px;display:flex;justify-content:space-between;gap:8px;color:#7189a5;font-size:10px;background:rgba(3,12,29,.86)}.ahs-chat-foot a{color:#8edfff;font-weight:800}
 .contact-whatsapp{margin-top:8px!important;color:#b8c9dc;font-size:14px}.contact-whatsapp a{color:var(--green);font-weight:900}
 @media(max-width:480px){#ahs-chat-widget{right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom))}#ahs-chat-toggle{width:58px;height:58px}#ahs-chat-box{right:0;bottom:68px;width:calc(100vw - 24px);height:min(590px,calc(100dvh - 100px));min-height:300px;border-radius:19px}.ahs-chat-head{padding:13px}.ahs-quick-questions{gap:6px;padding-left:12px;padding-right:12px}}
-[hidden]{display:none!important}.app-install{font:inherit;cursor:pointer;gap:6px;min-width:145px}.install-hint{margin-top:10px;color:#a9bbd0;font-size:13px}
+[hidden]{display:none!important}.app-install{font:inherit;cursor:pointer;gap:6px;min-width:145px}.install-hint{margin-top:10px;color:#a9bbd0;font-size:13px}.install-hint a{color:var(--cyan);font-weight:900;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:700px){.site-nav{background:rgba(2,8,23,.98)}.hero::after{filter:none;opacity:.7}.card:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
@@ -407,22 +407,52 @@ footer{text-align:center;padding:32px 7%;border-top:1px solid var(--line);color:
   (function(){
     const installButton = document.getElementById("install-app");
     const installHint = document.getElementById("install-hint");
-    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const userAgent = navigator.userAgent;
+    const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isAndroid = /android/i.test(userAgent);
     let installPrompt = null;
     const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+    function showInstallHelp() {
+      installHint.replaceChildren();
+      if (isAndroid) {
+        installHint.append(document.createTextNode("This in-app browser can't install the app. "));
+        const chromeLink = document.createElement("a");
+        const appUrl = new URL(window.location.href);
+        const fallbackUrl = encodeURIComponent(appUrl.href);
+        chromeLink.href = `intent://${appUrl.host}${appUrl.pathname}${appUrl.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallbackUrl};end`;
+        chromeLink.target = "_blank";
+        chromeLink.rel = "noopener noreferrer";
+        chromeLink.textContent = "Open in Chrome";
+        installHint.append(chromeLink, document.createTextNode(" and tap Install App."));
+      } else if (isIos) {
+        installHint.textContent = "Use your browser's Share menu, then choose Add to Home Screen.";
+      } else {
+        installHint.textContent = "Open your browser menu and choose Install app or Add to Home Screen.";
+      }
+      installHint.hidden = false;
+    }
+
     installButton.hidden = isInstalled;
     installButton.addEventListener("click", async () => {
-      if (installPrompt) {
-        installPrompt.prompt();
-        await installPrompt.userChoice;
-        installPrompt = null;
-        installButton.hidden = true;
+      if (!installPrompt) {
+        showInstallHelp();
         return;
       }
-      installHint.textContent = isIos
-        ? "To install: tap Share, then Add to Home Screen."
-        : "Open your browser menu and choose Install app or Add to Home Screen.";
-      installHint.hidden = false;
+      try {
+        installPrompt.prompt();
+        const choice = await installPrompt.userChoice;
+        installPrompt = null;
+        if (choice && choice.outcome === "accepted") {
+          installButton.hidden = true;
+          installHint.hidden = true;
+        } else {
+          showInstallHelp();
+        }
+      } catch (error) {
+        installPrompt = null;
+        showInstallHelp();
+      }
     });
     window.addEventListener("beforeinstallprompt", event => {
       event.preventDefault();
