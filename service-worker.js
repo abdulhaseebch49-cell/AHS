@@ -1,4 +1,4 @@
-const CACHE_NAME = "ahs-portfolio-v2";
+const CACHE_NAME = "ahs-portfolio-v3";
 const APP_SHELL = ["./", "./index.html", "./manifest.json", "./icons/icon-192.png"];
 
 self.addEventListener("install", event => {
@@ -20,24 +20,19 @@ self.addEventListener("fetch", event => {
 
   if (request.mode === "navigate") {
     event.respondWith((async () => {
-      const cached = await caches.match(request, { ignoreSearch: true });
-      const refresh = fetch(request).then(async response => {
+      try {
+        const response = await fetch(request, { cache: "no-cache" });
         if (response.ok) {
           const copy = response.clone();
-          await caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, copy).catch(() => {});
         }
         return response;
-      });
-
-      if (cached) {
-        event.waitUntil(refresh.then(() => {}).catch(() => {}));
-        return cached;
-      }
-
-      try {
-        return await refresh;
-      } catch (error) {
-        return (await caches.match("./index.html")) || (await caches.match("./"));
+      } catch {
+        return (await caches.match(request, { ignoreSearch: true })) ||
+          (await caches.match("./index.html")) ||
+          (await caches.match("./")) ||
+          Response.error();
       }
     })());
     return;
